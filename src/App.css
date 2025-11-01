@@ -1,0 +1,26 @@
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+  padding-top: 80px;
+  min-height: calc(100vh - 80px);
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding-top: 70px;
+  }
+}

@@ -1,0 +1,118 @@
+.job-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.job-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.job-type-icon {
+  font-size: 2.5rem;
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.job-card-title-section {
+  flex: 1;
+}
+
+.job-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.job-employer {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.job-card-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.job-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.detail-icon {
+  color: var(--primary-color);
+}
+
+.job-type-badge {
+  margin-left: auto;
+}
+
+.job-skills {
+  margin-top: 0.5rem;
+}
+
+.skills-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.skill-tag {
+  padding: 0.25rem 0.75rem;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.job-description {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+
+.job-card-actions {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+@media (max-width: 768px) {
+  .job-card-header {
+    gap: 0.75rem;
+  }
+
+  .job-type-icon {
+    font-size: 2rem;
+  }
+
+  .job-title {
+    font-size: 1.125rem;
+  }
+
+  .job-card-details {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .job-type-badge {
+    margin-left: 0;
+  }
+}
