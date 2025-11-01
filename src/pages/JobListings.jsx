@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { FaSearch, FaFilter } from 'react-icons/fa'
 import JobCard from '../components/JobCard'
 import { fetchJobs } from '../services/jobService'
@@ -15,16 +16,25 @@ const jobTypes = [
 ]
 
 const JobListings = () => {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [jobs, setJobs] = useState([])
   const [filteredJobs, setFilteredJobs] = useState([])
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedType, setSelectedType] = useState('all')
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
+  const [selectedType, setSelectedType] = useState(searchParams.get('type') || 'all')
   const [locationFilter, setLocationFilter] = useState('')
 
   useEffect(() => {
     loadJobs()
   }, [])
+
+  // Update filters when URL params change
+  useEffect(() => {
+    const searchParam = searchParams.get('search')
+    const typeParam = searchParams.get('type')
+    if (searchParam) setSearchQuery(searchParam)
+    if (typeParam) setSelectedType(typeParam)
+  }, [searchParams])
 
   useEffect(() => {
     filterJobs()

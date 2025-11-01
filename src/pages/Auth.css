@@ -38,6 +38,17 @@
   font-size: 0.875rem;
 }
 
+.info-message {
+  padding: 0.75rem 1rem;
+  background-color: rgba(32, 64, 144, 0.1);
+  border: 1px solid var(--primary-color);
+  border-radius: 0.5rem;
+  color: var(--primary-color);
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
 .auth-form {
   margin-bottom: 1.5rem;
 }

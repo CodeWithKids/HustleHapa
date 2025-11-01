@@ -16,7 +16,13 @@ import {
   FaTimesCircle,
   FaCalendar,
   FaMapMarkerAlt,
-  FaDollarSign
+  FaDollarSign,
+  FaClock,
+  FaEye,
+  FaStar,
+  FaChartBar,
+  FaEdit,
+  FaTrash
 } from 'react-icons/fa'
 import './Dashboard.css'
 
@@ -29,6 +35,9 @@ const EmployerDashboard = () => {
   const [selectedJob, setSelectedJob] = useState(null)
   const [showRatingForm, setShowRatingForm] = useState(false)
   const [ratingData, setRatingData] = useState({ rating: 0, comment: '' })
+  const [selectedApplication, setSelectedApplication] = useState(null)
+  const [showJobDateModal, setShowJobDateModal] = useState(false)
+  const [jobDate, setJobDate] = useState('')
 
   const [newJob, setNewJob] = useState({
     title: '',
@@ -39,6 +48,12 @@ const EmployerDashboard = () => {
     description: '',
     requiredSkills: ''
   })
+
+  // Calculate statistics
+  const totalJobs = jobs.length
+  const totalApplications = Object.values(applications).reduce((sum, apps) => sum + apps.length, 0)
+  const pendingApplications = Object.values(applications).flat().filter(app => app.status === 'pending').length
+  const acceptedApplications = Object.values(applications).flat().filter(app => app.status === 'accepted').length
 
   useEffect(() => {
     loadData()
@@ -93,16 +108,37 @@ const EmployerDashboard = () => {
     }
   }
 
-  const handleApplicationAction = async (applicationId, status, jobId) => {
-    const jobDate = status === 'accepted' ? prompt('Enter job date (YYYY-MM-DD):') : null
-    if (status === 'accepted' && !jobDate) return
+  const handleApplicationAction = async (applicationId, status, jobId, application) => {
+    if (status === 'accepted') {
+      setSelectedApplication({ id: applicationId, jobId, application })
+      setShowJobDateModal(true)
+      return
+    }
 
-    const result = await updateApplicationStatus(applicationId, status, jobDate)
+    const result = await updateApplicationStatus(applicationId, status, null)
     if (result.success) {
       alert(`Application ${status} successfully!`)
       loadData()
     } else {
       alert('Failed to update application')
+    }
+  }
+
+  const handleConfirmAccept = async () => {
+    if (!jobDate) {
+      alert('Please select a job date')
+      return
+    }
+
+    const result = await updateApplicationStatus(selectedApplication.id, 'accepted', jobDate)
+    if (result.success) {
+      alert('Application accepted successfully!')
+      setShowJobDateModal(false)
+      setJobDate('')
+      setSelectedApplication(null)
+      loadData()
+    } else {
+      alert('Failed to accept application')
     }
   }
 
@@ -165,21 +201,66 @@ const EmployerDashboard = () => {
       <div className="container">
         <div className="dashboard-header">
           <div>
-            <h1 className="page-title">Employer Dashboard</h1>
+            <h1 className="page-title">Welcome, {user.name}!</h1>
             <p className="page-subtitle">Manage your job postings and applicants</p>
           </div>
           <button
             onClick={() => setShowPostForm(!showPostForm)}
-            className="btn btn-primary"
+            className="btn btn-action"
           >
             <FaPlus aria-hidden="true" />
             <span>Post New Job</span>
           </button>
         </div>
 
+        {/* Statistics Cards */}
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-icon-wrapper stat-icon-jobs">
+              <FaBriefcase className="stat-icon" />
+            </div>
+            <div className="stat-content">
+              <div className="stat-number">{totalJobs}</div>
+              <div className="stat-label">Active Jobs</div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon-wrapper stat-icon-applications">
+              <FaUsers className="stat-icon" />
+            </div>
+            <div className="stat-content">
+              <div className="stat-number">{totalApplications}</div>
+              <div className="stat-label">Total Applications</div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon-wrapper stat-icon-pending">
+              <FaClock className="stat-icon" />
+            </div>
+            <div className="stat-content">
+              <div className="stat-number">{pendingApplications}</div>
+              <div className="stat-label">Pending Review</div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon-wrapper stat-icon-accepted">
+              <FaCheckCircle className="stat-icon" />
+            </div>
+            <div className="stat-content">
+              <div className="stat-number">{acceptedApplications}</div>
+              <div className="stat-label">Accepted Jobs</div>
+            </div>
+          </div>
+        </div>
+
         {showPostForm && (
           <div className="post-job-form card">
-            <h2 className="form-title">Post a New Job</h2>
+            <div className="form-header">
+              <h2 className="form-title">
+                <FaPlus aria-hidden="true" /> Post a New Job
+              </h2>
+              <p className="form-subtitle">Fill in the details below to post your job opportunity</p>
+            </div>
             <form onSubmit={handlePostJob}>
               <div className="form-row">
                 <div className="form-group">
@@ -267,8 +348,8 @@ const EmployerDashboard = () => {
                 />
               </div>
               <div className="form-actions">
-                <button type="submit" className="btn btn-primary">
-                  Post Job
+                <button type="submit" className="btn btn-action">
+                  <FaPlus aria-hidden="true" /> Post Job
                 </button>
                 <button
                   type="button"
@@ -294,9 +375,14 @@ const EmployerDashboard = () => {
               {jobs.map(job => (
                 <div key={job.id} className="job-post-card card">
                   <div className="job-post-header">
-                    <h3 className="job-post-title">{job.title}</h3>
+                    <div className="job-post-title-section">
+                      <h3 className="job-post-title">{job.title}</h3>
+                      <p className="job-post-meta">
+                        Posted on {new Date(job.datePosted).toLocaleDateString()}
+                      </p>
+                    </div>
                     <span className={`badge ${job.status === 'open' ? 'badge-success' : 'badge-warning'}`}>
-                      {job.status}
+                      {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
                     </span>
                   </div>
                   <div className="job-post-details">
@@ -306,8 +392,23 @@ const EmployerDashboard = () => {
                     <span className="job-detail">
                       <FaDollarSign aria-hidden="true" /> {job.pay}
                     </span>
+                    {job.requiredSkills && job.requiredSkills.length > 0 && (
+                      <span className="job-detail">
+                        <FaBriefcase aria-hidden="true" /> {job.requiredSkills.length} skill{job.requiredSkills.length !== 1 ? 's' : ''} required
+                      </span>
+                    )}
                   </div>
                   <p className="job-post-description">{job.description}</p>
+                  {job.requiredSkills && job.requiredSkills.length > 0 && (
+                    <div className="job-post-skills">
+                      <span className="skills-label-small">Required Skills:</span>
+                      <div className="skills-list-small">
+                        {job.requiredSkills.map((skill, idx) => (
+                          <span key={idx} className="skill-tag-small">{skill}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="applications-section">
                     <h4 className="applications-title">
@@ -316,49 +417,102 @@ const EmployerDashboard = () => {
                     </h4>
                     {applications[job.id] && applications[job.id].length > 0 ? (
                       <div className="applications-list">
-                        {applications[job.id].map(app => (
-                          <div key={app.id} className="application-item">
+                        {/* Pending Applications First */}
+                        {applications[job.id]
+                          .filter(app => app.status === 'pending')
+                          .map(app => (
+                          <div key={app.id} className="application-item application-item-pending">
                             <div className="application-info">
-                              <strong>{app.userName}</strong>
-                              <span className="application-status badge badge-warning">
-                                {app.status}
+                              <div>
+                                <strong>{app.userName}</strong>
+                                <p className="application-email">{app.userEmail}</p>
+                              </div>
+                              <span className={`application-status badge ${
+                                app.status === 'accepted' ? 'badge-success' : 
+                                app.status === 'rejected' ? 'badge-primary' : 
+                                'badge-warning'
+                              }`}>
+                                {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
                               </span>
                             </div>
                             <p className="application-date">
                               Applied: {new Date(app.appliedDate).toLocaleDateString()}
                             </p>
-                            {app.status === 'pending' && (
-                              <div className="application-actions">
-                                <button
-                                  onClick={() => handleApplicationAction(app.id, 'accepted', job.id)}
-                                  className="btn btn-secondary btn-sm"
-                                >
-                                  <FaCheckCircle aria-hidden="true" /> Accept
-                                </button>
-                                <button
-                                  onClick={() => handleApplicationAction(app.id, 'rejected', job.id)}
-                                  className="btn btn-outline btn-sm"
-                                >
-                                  <FaTimesCircle aria-hidden="true" /> Reject
-                                </button>
-                              </div>
-                            )}
-                            {app.status === 'accepted' && (
+                            <div className="application-actions">
                               <button
-                                onClick={() => {
-                                  setSelectedJob(job)
-                                  setShowRatingForm(true)
-                                }}
+                                onClick={() => handleApplicationAction(app.id, 'accepted', job.id, app)}
+                                className="btn btn-secondary btn-sm"
+                              >
+                                <FaCheckCircle aria-hidden="true" /> Accept
+                              </button>
+                              <button
+                                onClick={() => handleApplicationAction(app.id, 'rejected', job.id, app)}
                                 className="btn btn-outline btn-sm"
                               >
-                                <FaStar aria-hidden="true" /> Rate Worker
+                                <FaTimesCircle aria-hidden="true" /> Reject
                               </button>
+                            </div>
+                          </div>
+                        ))}
+                        {/* Accepted Applications */}
+                        {applications[job.id]
+                          .filter(app => app.status === 'accepted')
+                          .map(app => (
+                          <div key={app.id} className="application-item application-item-accepted">
+                            <div className="application-info">
+                              <div>
+                                <strong>{app.userName}</strong>
+                                <p className="application-email">{app.userEmail}</p>
+                              </div>
+                              <span className={`application-status badge badge-success`}>
+                                Accepted
+                              </span>
+                            </div>
+                            <p className="application-date">
+                              Applied: {new Date(app.appliedDate).toLocaleDateString()}
+                            </p>
+                            {app.jobDate && (
+                              <p className="application-job-date">
+                                <FaCalendar aria-hidden="true" /> Job Date: {new Date(app.jobDate).toLocaleDateString()}
+                              </p>
                             )}
+                            <button
+                              onClick={() => {
+                                setSelectedJob({ ...job, workerName: app.userName })
+                                setShowRatingForm(true)
+                              }}
+                              className="btn btn-outline btn-sm"
+                            >
+                              <FaStar aria-hidden="true" /> Rate {app.userName}
+                            </button>
+                          </div>
+                        ))}
+                        {/* Rejected Applications */}
+                        {applications[job.id]
+                          .filter(app => app.status === 'rejected')
+                          .map(app => (
+                          <div key={app.id} className="application-item application-item-rejected">
+                            <div className="application-info">
+                              <div>
+                                <strong>{app.userName}</strong>
+                                <p className="application-email">{app.userEmail}</p>
+                              </div>
+                              <span className="application-status badge badge-primary">
+                                Rejected
+                              </span>
+                            </div>
+                            <p className="application-date">
+                              Applied: {new Date(app.appliedDate).toLocaleDateString()}
+                            </p>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="no-applicants">No applicants yet</p>
+                      <div className="no-applicants-container">
+                        <FaUsers className="no-applicants-icon" />
+                        <p className="no-applicants">No applicants yet</p>
+                        <p className="no-applicants-hint">Share your job posting to get more applicants</p>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -367,11 +521,61 @@ const EmployerDashboard = () => {
           )}
         </div>
 
+        {/* Job Date Modal */}
+        {showJobDateModal && selectedApplication && (
+          <div className="rating-modal">
+            <div className="rating-modal-content card">
+              <h2 className="form-title">Accept Application</h2>
+              <p className="rating-job-name">
+                Accepting application from: <strong>{selectedApplication.application?.userName}</strong>
+              </p>
+              <div className="form-group">
+                <label htmlFor="job-date" className="form-label">
+                  <FaCalendar aria-hidden="true" /> Job Date
+                </label>
+                <input
+                  id="job-date"
+                  type="date"
+                  value={jobDate}
+                  onChange={(e) => setJobDate(e.target.value)}
+                  className="form-input"
+                  min={new Date().toISOString().split('T')[0]}
+                  required
+                />
+                <small className="form-hint">Select the date when the job will be performed</small>
+              </div>
+              <div className="form-actions">
+                <button onClick={handleConfirmAccept} className="btn btn-secondary">
+                  <FaCheckCircle aria-hidden="true" /> Confirm Accept
+                </button>
+                <button
+                  onClick={() => {
+                    setShowJobDateModal(false)
+                    setJobDate('')
+                    setSelectedApplication(null)
+                  }}
+                  className="btn btn-outline"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Rating Modal */}
         {showRatingForm && selectedJob && (
           <div className="rating-modal">
             <div className="rating-modal-content card">
               <h2 className="form-title">Rate Worker</h2>
-              <p className="rating-job-name">Job: {selectedJob.title}</p>
+              <p className="rating-job-name">
+                <strong>Job:</strong> {selectedJob.title}
+              </p>
+              {selectedJob.workerName && (
+                <p className="rating-worker-name">
+                  <strong>Worker:</strong> {selectedJob.workerName}
+                </p>
+              )}
               <div className="form-group">
                 <label className="form-label">Rating</label>
                 <Rating
@@ -389,11 +593,12 @@ const EmployerDashboard = () => {
                   onChange={(e) => setRatingData({ ...ratingData, comment: e.target.value })}
                   className="form-textarea"
                   placeholder="Share your experience..."
+                  rows="4"
                 />
               </div>
               <div className="form-actions">
                 <button onClick={handleRateJob} className="btn btn-primary">
-                  Submit Rating
+                  <FaStar aria-hidden="true" /> Submit Rating
                 </button>
                 <button
                   onClick={() => {

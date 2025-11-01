@@ -38,7 +38,7 @@ const JobCard = ({ job, onApply }) => {
 
   const handleApply = async () => {
     if (!user) {
-      navigate('/login')
+      navigate('/login', { state: { from: '/jobs', message: 'Please log in to apply for jobs' } })
       return
     }
 
@@ -57,6 +57,7 @@ const JobCard = ({ job, onApply }) => {
   }
 
   const hasApplied = user && job.applicants?.some(app => app.userId === user.id)
+  const requiresLogin = !user
 
   return (
     <article className="job-card card" aria-label={`Job: ${job.title}`}>
@@ -100,13 +101,18 @@ const JobCard = ({ job, onApply }) => {
       <p className="job-description">{job.description}</p>
 
       <div className="job-card-actions">
+        {requiresLogin && (
+          <p className="login-required-text">
+            <strong>Login required</strong> to apply for this job
+          </p>
+        )}
         <button
           onClick={handleApply}
-          className={`btn ${hasApplied ? 'btn-outline' : 'btn-action'}`}
+          className={`btn ${hasApplied ? 'btn-outline' : requiresLogin ? 'btn-primary' : 'btn-action'}`}
           disabled={hasApplied || user?.role === 'employer'}
-          aria-label={hasApplied ? 'Already applied' : `Apply to ${job.title}`}
+          aria-label={requiresLogin ? 'Login required to apply' : hasApplied ? 'Already applied' : `Apply to ${job.title}`}
         >
-          {hasApplied ? 'Applied' : 'Apply'}
+          {hasApplied ? 'Applied' : requiresLogin ? 'Login to Apply' : 'Apply'}
         </button>
       </div>
     </article>

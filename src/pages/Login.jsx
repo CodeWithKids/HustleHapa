@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import './Auth.css'
 
@@ -10,6 +10,11 @@ const Login = () => {
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // Get redirect message from location state
+  const redirectMessage = location.state?.message || null
+  const from = location.state?.from || null
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -25,7 +30,10 @@ const Login = () => {
     const result = login(email, password)
 
     if (result.success) {
-      if (result.user.role === 'employer') {
+      // If redirected from jobs page, go back there (but only for regular users)
+      if (from === '/jobs' && result.user.role === 'user') {
+        navigate('/jobs')
+      } else if (result.user.role === 'employer') {
         navigate('/employer-dashboard')
       } else {
         navigate('/dashboard')
@@ -44,6 +52,12 @@ const Login = () => {
           <h1 className="auth-title">Login to Hustle Hapa</h1>
           <p className="auth-subtitle">Access your dashboard and start applying</p>
         </div>
+
+        {redirectMessage && (
+          <div className="info-message" role="alert">
+            {redirectMessage}
+          </div>
+        )}
 
         {error && (
           <div className="error-message" role="alert">
